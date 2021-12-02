@@ -7,6 +7,8 @@ use std::path;
 use std::env;
 use std::time::Duration;
 use std::num;
+use std::fs::File;
+use std::io::BufReader;
 use rand::Rng;
 use rand::rngs;
 use rand::seq::SliceRandom;
@@ -42,7 +44,6 @@ impl AppState {
                                         720), 
                                         color)?;
             array.push((i, slice));
-            println!("{:?}, {:?}", i, color);
         }
         array.shuffle(&mut rng);
 
@@ -192,66 +193,88 @@ impl event::EventHandler for AppState {
                 }
             },
             "merge" => {
-                let mut list1: Vec<Vec<(usize, usize)>> = vec!();
-                let mut list2: Vec<Vec<(usize, usize)>> = vec!();
+                let x = merge(stream_handle, self, ctx, self.array.clone(), 0);
 
-                let mut step = 1;
+                fn merge(sink: rodio::OutputStreamHandle, drawer: &mut AppState, ctx: &mut Context, mut list: Vec<(usize, graphics::Mesh)>, index: usize) -> Vec<(usize, graphics::Mesh)> {
+                    if list.len() == 1 { return list; }
+            
+                    let mut middle = list.len() / 2;
+                    let mut left = list;
+                    let mut right = left.split_off(middle);
+                
+                    left = merge(sink.clone(), drawer, ctx, left, index);
+                    right = merge(sink.clone(), drawer, ctx, right, (index + middle));
 
-                let mut n = 0;
-                for b in &self.array {
-                    let x = vec!((b.0, n));
-                    list1.push(x);
-                    n += 1;
-                }
-                while step < ARRAY_SIZE / 2 {
-                    let mut i = 0;
-    
-                    let mut j = 0;
-                    let mut k = 0;
+                    let _sink = Sink::try_new(&sink).unwrap();
+                
+                    let mut new = vec!();
+                    while left.len() > 0 && right.len() > 0 {
+                        if left[0].0 < right[0].0 {
+                            let x = left.remove(0);
+                            let source = SineWave::new(300 + x.0 as u32).take_duration(Duration::from_secs_f32(0.01)).amplify(0.1);
+                            _sink.append(source);
+                            new.push(x);
+                        } else {
+                            let x = right.remove(0);
+                            let source = SineWave::new(300 + x.0 as u32).take_duration(Duration::from_secs_f32(0.01)).amplify(0.1);
+                            _sink.append(source);
+                            new.push(x);
+                        }
+                    }
+                    if left.len() > 0 {
+                        new.append(&mut left);
+                    }
+                    if right.len() > 0 {
+                        new.append(&mut right);
+                    }
                     
-                    while i < ARRAY_SIZE {
-                        let mut new: Vec<(usize, usize)> = vec!();
-                        while j < step {
-                            if list1[i+1].len() == 0 {
-                                new.append(&mut list1[i]);
-                                break;
-                            }
-                            if list1[i][j].0 < list1[i+1][k].0 {
-                                new.push(list1[i][j]);
-                                j += 1
-                            } else {
-                                new.push(list1[i+1][k]);
-                                k += 1;
-                            }
-                        }
-                        if list1[i+1].len() != 0 {
-                            new.append(&mut list1[i+1]);
-                        }
-                        list2.push(new);
-                        i += step*2;
+                    for i in 0..new.len() {
+                        drawer.array[i + index] = new[i].clone();
                     }
-                    let mut n = 0;
-                    for i in list1 {
-                        let mut m = 0;
-                        for j in i {
-                            let x = self.array.remove(j.1);
-                            self.array.insert((n*step) + m, x);
-                            m += 1;
-                        }
-                        n += 1;
-                    }
-                    self.draw(ctx);
-                    step *= 2;
-                    list1 = list2;
-                    list2 = vec!();
+                    if index % 5 == 0 { drawer.draw(ctx); }
+            
+                    new
                 }
+                
+                self.array = x;
+            },
+            "stalin" => {
+                let mut i = 1;
+                let mut j = 1;
+                while i < ARRAY_SIZE {
+                    if self.array[j-1].0 > self.array[j].0 {
+                        let mut color = int_to_rgba(self.array[j].0, ARRAY_SIZE);
+                        color[0] = std::cmp::max(((color[0]) * 255.0) as i32 - 77, 0) as f32 / 255.0;
+                        color[1] = color[0];
+                        color[2] = color[0];
+                        let slice = graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), 
+                            graphics::Rect::new_i32(0, 
+                                                    0, 
+                                                    (1000/ARRAY_SIZE) as i32, 
+                                                    720), 
+                                                    color.into());
+                        self.array[j].1 = slice.unwrap();
+                        let x = self.array.remove(j);
+                        self.array.push(x);
+                        if i % 5 == 0 { 
+                            let file = BufReader::new(File::open("resources/gunshot.wav").unwrap());
+                            let source = Decoder::new(file).unwrap();
+                            stream_handle.play_raw(source.convert_samples());
+                            self.draw(ctx); 
+                        }
+                    } else {
+                        j += 1;
+                    }
+                    i += 1;
+                }
+                sink.stop();
             }
             _ => unimplemented!()
         }
     }
 }
 
-pub fn main() -> GameResult {
+fn main() -> GameResult {
 
     let resource_dir = path::PathBuf::from("./resources");
 
