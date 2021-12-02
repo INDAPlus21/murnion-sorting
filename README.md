@@ -11,3 +11,5 @@ planned:
  - [ ] Counting sort
  - [ ] Pancake sort
  - [ ] Odd-even sort
+ - [ ] Bubble sort
+ - [ ] Heap sort
