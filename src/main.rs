@@ -282,9 +282,31 @@ impl event::EventHandler for AppState {
                         if self.array[j - 1].0 > self.array[j].0 {
                             break;
                         }
+                        if i % 10 == 0 {
+                            self.draw(ctx);
+                        }
                     }
                     self.array.shuffle(&mut rng);
                 }
+            },
+            "quantum bogosort" => {
+                self.array.sort_by_key(|x| x.0);
+                let mut sinks: Vec<rodio::Sink> = vec!();
+                for i in 0..5 {
+                    let x = Sink::try_new(&stream_handle).unwrap();
+                    sinks.push(x);
+                }
+                let source1 = SineWave::new((200 + ARRAY_SIZE / 2) as u32).take_duration(Duration::from_secs_f32(0.2)).amplify(0.1);
+                sinks[0].append(source1);
+                let source2 = SineWave::new((250 + ARRAY_SIZE / 2) as u32).take_duration(Duration::from_secs_f32(0.2)).amplify(0.1);
+                sinks[1].append(source2);
+                let source3 = SineWave::new((300 + ARRAY_SIZE / 2) as u32).take_duration(Duration::from_secs_f32(0.2)).amplify(0.1);
+                sinks[2].append(source3);
+                let source4 = SineWave::new((350 + ARRAY_SIZE / 2) as u32).take_duration(Duration::from_secs_f32(0.2)).amplify(0.1);
+                sinks[3].append(source4);
+                let source5 = SineWave::new((400 + ARRAY_SIZE / 2) as u32).take_duration(Duration::from_secs_f32(0.2)).amplify(0.1);
+                sinks[4].append(source5);
+                sinks[4].sleep_until_end();
             }
             _ => unimplemented!()
         }
