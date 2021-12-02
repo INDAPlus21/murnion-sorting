@@ -80,7 +80,7 @@ impl event::EventHandler for AppState {
 
         let args: Vec<String> = env::args().collect();
         match args[1].to_lowercase().as_str() {
-            "radix" => {
+            "radix sort" => {
                 let mut third_digit_array = [VEC; 10];
                 let mut second_digit_array = [VEC; 10];
                 let mut first_digit_array = [VEC; 10];
@@ -157,7 +157,7 @@ impl event::EventHandler for AppState {
                     }
                 }
             },
-            "selection" => {
+            "selection sort" => {
                 for i in 0..ARRAY_SIZE {
                     let mut pos = i;
                     let mut smallest = self.array[i].0;
@@ -176,7 +176,7 @@ impl event::EventHandler for AppState {
                     if i % 10 == 0 { self.draw(ctx); }
                 }
             },
-            "insertion" => {
+            "insertion sort" => {
                 for i in 0..ARRAY_SIZE {
                     let mut j = i;
                     while j > 0 && self.array[j].0 < self.array[j-1].0 {
@@ -193,7 +193,7 @@ impl event::EventHandler for AppState {
                     }
                 }
             },
-            "merge" => {
+            "merge sort" => {
                 let x = merge(stream_handle, self, ctx, self.array.clone(), 0);
 
                 fn merge(sink: rodio::OutputStreamHandle, drawer: &mut AppState, ctx: &mut Context, mut list: Vec<(usize, graphics::Mesh)>, index: usize) -> Vec<(usize, graphics::Mesh)> {
@@ -239,7 +239,7 @@ impl event::EventHandler for AppState {
                 
                 self.array = x;
             },
-            "stalin" => {
+            "stalin sort" => {
                 let mut i = 1;
                 let mut j = 1;
                 while i < ARRAY_SIZE {
