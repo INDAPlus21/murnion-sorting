@@ -9,6 +9,7 @@ use std::time::Duration;
 use std::num;
 use std::fs::File;
 use std::io::BufReader;
+use std::collections::BinaryHeap;
 use rand::Rng;
 use rand::rngs;
 use rand::seq::SliceRandom;
@@ -282,7 +283,7 @@ impl event::EventHandler for AppState {
                         if self.array[j - 1].0 > self.array[j].0 {
                             break;
                         }
-                        if i % 10 == 0 {
+                        if i % 100 == 0 {
                             self.draw(ctx);
                         }
                     }
@@ -307,6 +308,124 @@ impl event::EventHandler for AppState {
                 let source5 = SineWave::new((400 + ARRAY_SIZE / 2) as u32).take_duration(Duration::from_secs_f32(0.2)).amplify(0.1);
                 sinks[4].append(source5);
                 sinks[4].sleep_until_end();
+            },
+            "bubble sort" => {
+                let mut i = 1;
+                let mut sorted = true;
+                while i < ARRAY_SIZE {
+                    if self.array[i - 1].0 > self.array[i].0 {
+                        let source = SineWave::new((300 + self.array[i].0) as u32).take_duration(Duration::from_secs_f32(0.1)).amplify(0.1);
+                        sink.append(source);
+                        let source = SineWave::new((300 + self.array[i - 1].0) as u32).take_duration(Duration::from_secs_f32(0.1)).amplify(0.1);
+                        sink.append(source);
+                        sorted = false;
+                        let x = self.array.remove(i);
+                        self.array.insert(i - 1, x);
+                    }
+                    if i % 631 == 0 {
+                        self.draw(ctx);
+                    }
+                    i += 1;
+                    if i == ARRAY_SIZE && !sorted {
+                        i = 1;
+                        sorted = true;
+                    }
+                }
+            },
+            "odd-even sort" => {
+                let mut sorted = false;
+                while (!sorted) {
+                    sorted = true;
+                    for i in 0..ARRAY_SIZE - 1 {
+                        if self.array[i].0 > self.array[i + 1].0 && i % 2 == 0 {
+                            let source = SineWave::new((300 + self.array[i].0) as u32).take_duration(Duration::from_secs_f32(0.1)).amplify(0.1);
+                            sink.append(source);
+                            let source = SineWave::new((300 + self.array[i + 1].0) as u32).take_duration(Duration::from_secs_f32(0.1)).amplify(0.1);
+                            sink.append(source);
+                            sorted = false;
+                            let x = self.array.remove(i);
+                            self.array.insert(i + 1, x);
+                        }
+                        if i % 991 == 0 {
+                            self.draw(ctx);
+                        }
+                    }
+                    let mut i = ARRAY_SIZE - 1;
+                    while i > 0 {
+                        i -= 1;
+                        if self.array[i].0 > self.array[i + 1].0 && i % 2 == 1 {
+                            let source = SineWave::new((300 + self.array[i].0) as u32).take_duration(Duration::from_secs_f32(0.1)).amplify(0.1);
+                            sink.append(source);
+                            let source = SineWave::new((300 + self.array[i + 1].0) as u32).take_duration(Duration::from_secs_f32(0.1)).amplify(0.1);
+                            sink.append(source);
+                            sorted = false;
+                            let x = self.array.remove(i);
+                            self.array.insert(i + 1, x);
+                        }
+                    }
+                }
+            },
+            "heap sort" => {
+                let mut heap: BinaryHeap<(usize, usize)> = BinaryHeap::new();
+                for i in 0..ARRAY_SIZE {
+                    heap.push((self.array[i].0, i))
+                }
+                for i in 0..ARRAY_SIZE {
+                    let mut _heap = heap.clone();
+                    let y = _heap.pop().unwrap();
+                    let mut vec_heap = _heap.into_vec();
+                    for i in 0..vec_heap.len() {
+                        if vec_heap[i].1 > y.1 {
+                            vec_heap[i].1 -= 1;
+                        }
+                    }
+                    heap = BinaryHeap::from(vec_heap);
+                    let x = self.array.remove(y.1);
+                    let source = SineWave::new((x.0) as u32).take_duration(Duration::from_secs_f32(0.1)).amplify(0.1);
+                    sink.append(source);
+                    self.array.insert(y.0, x);
+                    if i % 10 == 0 {
+                        self.draw(ctx);
+                    }
+                }
+            },
+            "pancake sort" => {
+                for i in 0..ARRAY_SIZE {
+                    let mut smallest = 10000;
+                    let mut pos = 0;
+                    for j in i..ARRAY_SIZE {
+                        if self.array[j].0 < smallest {
+                            smallest = self.array[j].0;
+                            pos = j;
+                        }
+                    }
+                    let source = SineWave::new((400 + smallest * 2) as u32).take_duration(Duration::from_secs_f32(0.1)).amplify(0.1);
+                    sink.append(source);
+                    let mut new = self.array.split_off(pos);
+                    new.reverse();
+                    self.array.append(&mut new);
+                    if i % 23 == 0 { self.draw(ctx); }
+                    let mut new = self.array.split_off(i);
+                    new.reverse();
+                    self.array.append(&mut new);
+                    if i % 23 == 0 { self.draw(ctx); }
+                }
+            },
+            "counting sort" => {
+                let mut ordered = vec!(vec!(); 1000);
+                for i in self.array.clone() {
+                    let source = SineWave::new(i.0 as u32).take_duration(Duration::from_secs_f32(0.01)).amplify(0.1);
+                    sink.append(source);
+                    if i.0 % 23 == 0 { sink.sleep_until_end(); }
+                    ordered[i.0].push(i);
+                }
+                for i in 0..ordered.len() {
+                    let x = ordered[i].pop().unwrap();
+                    let source = SineWave::new((400 + x.0 * 2) as u32).take_duration(Duration::from_secs_f32(0.1)).amplify(0.1);
+                    sink.append(source);
+                    if i % 10 == 0 { self.draw(ctx); }
+                    self.array[i] = x;
+                }
             }
             _ => unimplemented!()
         }

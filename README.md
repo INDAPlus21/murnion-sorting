@@ -7,9 +7,9 @@ planned:
  - [x] Merge sort
  - [x] Stalin sort
  - [x] Bogosort
- - [ ] Quantum bogosort
- - [ ] Counting sort
- - [ ] Pancake sort
- - [ ] Odd-even sort
- - [ ] Bubble sort
- - [ ] Heap sort
+ - [x] Quantum bogosort
+ - [x] Counting sort
+ - [x] Pancake sort
+ - [x] Odd-even sort
+ - [x] Bubble sort
+ - [x] Heap sort
