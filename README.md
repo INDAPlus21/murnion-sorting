@@ -6,7 +6,7 @@ planned:
  - [x] Radix LSD In-Place sort
  - [x] Merge sort
  - [x] Stalin sort
- - [ ] Bogosort
+ - [x] Bogosort
  - [ ] Quantum bogosort
  - [ ] Counting sort
  - [ ] Pancake sort

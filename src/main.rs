@@ -32,7 +32,7 @@ impl AppState {
     //initialize the application here
     fn new(ctx: &mut Context) -> GameResult<AppState> {
         let _seed: u64;
-        unsafe { _seed = seed; }
+        unsafe { _seed = seed; seed += 1; }
         let mut rng: rngs::StdRng = rand::SeedableRng::seed_from_u64(_seed);
         let mut array = vec!();
         for i in 0..ARRAY_SIZE {
@@ -268,6 +268,23 @@ impl event::EventHandler for AppState {
                     i += 1;
                 }
                 sink.stop();
+            },
+            "bogosort" => {
+                let _seed;
+                unsafe { _seed = seed; seed += 1; }
+                let mut rng: rngs::StdRng = rand::SeedableRng::seed_from_u64(_seed);
+                for i in 0..ARRAY_SIZE * 10 {
+                    for j in 1..ARRAY_SIZE {
+                        let source = SineWave::new((300 + self.array[j].0) as u32).take_duration(Duration::from_secs_f32(0.1)).amplify(0.1);
+                        sink.append(source);
+                        let source = SineWave::new((300 + self.array[j - 1].0) as u32).take_duration(Duration::from_secs_f32(0.1)).amplify(0.1);
+                        sink.append(source);
+                        if self.array[j - 1].0 > self.array[j].0 {
+                            break;
+                        }
+                    }
+                    self.array.shuffle(&mut rng);
+                }
             }
             _ => unimplemented!()
         }
