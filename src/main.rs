@@ -10,6 +10,9 @@ use std::num;
 use std::fs::File;
 use std::io::BufReader;
 use std::collections::BinaryHeap;
+use chrono::DateTime;
+use chrono::Utc;
+use chrono::Timelike;
 use rand::Rng;
 use rand::rngs;
 use rand::seq::SliceRandom;
@@ -32,9 +35,9 @@ struct AppState {
 impl AppState { 
     //initialize the application here
     fn new(ctx: &mut Context) -> GameResult<AppState> {
-        let _seed: u64;
-        unsafe { _seed = seed; seed += 1; }
-        let mut rng: rngs::StdRng = rand::SeedableRng::seed_from_u64(_seed);
+        let cur = Utc::now().timestamp_millis();
+        unsafe { seed = cur as u64; seed += 1; }
+        let mut rng: rngs::StdRng = rand::SeedableRng::seed_from_u64(cur as u64);
         let mut array = vec!();
         for i in 0..ARRAY_SIZE {
             let color: Color = int_to_rgba(i, ARRAY_SIZE).into();
@@ -177,6 +180,9 @@ impl event::EventHandler for AppState {
                 }
             },
             "insertion sort" => {
+                let _seed;
+                unsafe { _seed = seed; seed += 1; }
+                let mut rng: rngs::StdRng = rand::SeedableRng::seed_from_u64(_seed);
                 for i in 0..ARRAY_SIZE {
                     let mut j = i;
                     while j > 0 && self.array[j].0 < self.array[j-1].0 {
@@ -187,7 +193,7 @@ impl event::EventHandler for AppState {
                         let x = self.array.remove(j);
                         self.array.insert(j - 1, x);
                         j -= 1;
-                        if (j + i) % 613 == 0 {
+                        if (rng.gen::<usize>()) % 600 == 0 {
                         self.draw(ctx);
                         }
                     }
@@ -322,7 +328,7 @@ impl event::EventHandler for AppState {
                         let x = self.array.remove(i);
                         self.array.insert(i - 1, x);
                     }
-                    if i % 631 == 0 {
+                    if i % 911 == 0 {
                         self.draw(ctx);
                     }
                     i += 1;
